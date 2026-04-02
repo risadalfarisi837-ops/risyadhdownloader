@@ -15,9 +15,10 @@
             --main-black: #0a0a0a;
             --card-bg: #ffffff;
             
-            --accent-primary: #6a0dad;  
-            --accent-secondary: #ccff00; 
-            --accent-tertiary: #ff5f00;  
+            /* PALET WARNA BARU */
+            --accent-primary: #6a0dad;  /* Deep Electric Violet */
+            --accent-secondary: #ccff00; /* Toxic Lime */
+            --accent-tertiary: #ff5f00;  /* Industrial Orange */
             
             --border-width: 3px;
             --font-head: 'Space Grotesk', sans-serif;
@@ -97,6 +98,13 @@
         }
         @keyframes glitch { 0% { clip: rect(20px, 9999px, 10px, 0); } 100% { clip: rect(50px, 9999px, 80px, 0); } }
 
+        .nav-btn {
+            text-decoration: none; color: var(--main-black); font-weight: 800;
+            background: var(--accent-secondary); border: 2px solid var(--main-black);
+            padding: 8px 15px; box-shadow: 3px 3px 0 var(--main-black);
+            font-size: 0.9rem;
+        }
+
         /* --- CONTAINER & CARD --- */
         .container { max-width: 550px; margin: 30px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 30px; }
 
@@ -108,6 +116,7 @@
             overflow: hidden;
         }
 
+        /* Dekorasi Sekrup */
         .screw { position: absolute; font-family: monospace; font-weight: bold; font-size: 1.2rem; pointer-events: none; }
         .top-left { top: 5px; left: 10px; } .top-right { top: 5px; right: 10px; }
         .bottom-left { bottom: 5px; left: 10px; } .bottom-right { bottom: 5px; right: 10px; }
@@ -124,6 +133,7 @@
 
         .profile-section { display: flex; align-items: center; gap: 15px; }
 
+        /* AVATAR STYLING */
         .avatar-img {
             width: 60px; height: 60px;
             border: 3px solid var(--main-black);
@@ -131,7 +141,7 @@
             border-radius: 12px; 
             box-shadow: 4px 4px 0 var(--accent-secondary);
             object-fit: cover; 
-            object-position: top center; 
+            object-position: top center; /* Fokus ke area wajah gambar */
         }
 
         .profile-info { display: flex; flex-direction: column; }
@@ -201,6 +211,7 @@
         .footer-line { width: 50px; height: 4px; background: var(--main-black); margin: 0 auto 15px auto; }
         .risyadh-highlight { background: var(--main-black); color: #fff; padding: 2px 6px; font-weight: bold; }
 
+        /* --- UTILITIES --- */
         .hidden { display: none !important; }
 
         /* LOADING ANIMATION */
@@ -208,13 +219,11 @@
         @keyframes scan { 0% { width: 0; } 50% { width: 100%; } 100% { width: 0; margin-left: auto; } }
         .blink-text { font-family: var(--font-mono); font-weight: bold; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.5; } }
-        
-        #loading-status { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-primary); margin-top: 10px; font-weight: bold;}
 
         /* ERROR CARD */
         .error-state { border-color: red; box-shadow: 8px 8px 0 red; }
         .error-header { background: red; color: white; padding: 10px; font-weight: bold; font-family: var(--font-mono); }
-        .error-body { padding: 20px; color: red; font-family: var(--font-mono); font-weight: bold; font-size: 0.9rem; word-wrap: break-word; }
+        .error-body { padding: 20px; color: red; font-family: var(--font-mono); font-weight: bold; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -225,7 +234,7 @@
 
     <div class="marquee-top">
         <div class="marquee-content">
-            SYSTEM READY • V.5.2 ULTRA • AUTO-FALLBACK ENGINE • TIKTOK • INSTAGRAM • RISYADH •
+            SYSTEM READY • V.3.0 ULTRA • NO WATERMARK • FAST SPEED • SECURE • RISYADH • SYSTEM READY • V.3.0 ULTRA • NO WATERMARK •
         </div>
     </div>
 
@@ -245,7 +254,7 @@
 
             <div class="card-header-visual">
                 <div class="profile-section">
-                    <img src="profile.jpg" alt="User Profile" class="avatar-img" id="userAvatar" onerror="this.src='https://files.catbox.moe/1yu7kn.jpg'">
+                    <img src="https://files.catbox.moe/1yu7kn.jpg" alt="User Profile" class="avatar-img" id="userAvatar">
                     <div class="profile-info">
                         <span class="user-role">RISYADH DOWNLOADER</span>
                         <span class="user-action">PASTE YOUR LINK BELOW</span>
@@ -257,11 +266,11 @@
             <div class="card-body">
                 <div class="input-wrapper">
                     <div class="input-label">TARGET URL:</div>
-                    <input type="text" id="urlInput" class="cyber-input" placeholder="https://..." autocomplete="off">
+                    <input type="text" id="urlInput" class="cyber-input" placeholder="https://vt.tiktok.com/..." autocomplete="off">
                 </div>
 
                 <div class="platform-tags">
-                    <span>#TIKTOK</span> <span>#INSTAGRAM</span>
+                    <span>#TIKTOK</span>
                 </div>
                 
                 <button id="downloadBtn" onclick="fetchMedia()" class="cyber-button">
@@ -273,7 +282,6 @@
         <div id="loading" class="cyber-card hidden" style="text-align: center; padding: 40px;">
             <div class="scanner"></div>
             <p class="blink-text">PROCESSING DATA STREAM...</p>
-            <div id="loading-status">> Menghubungkan ke server...</div>
         </div>
 
         <div id="error-msg" class="cyber-card error-state hidden">
@@ -286,55 +294,12 @@
         <footer class="risyadh-footer">
             <div class="footer-line"></div>
             <p>POWERED BY <span class="risyadh-highlight">RISYADH</span></p>
-            <p style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">ENGINEERED FOR STABILITY</p>
+            <p style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">ENGINEERED FOR PERFORMANCE</p>
         </footer>
 
     </div>
 
     <script>
-        // Fungsi Update Teks Status Loading
-        function updateStatus(text) {
-            document.getElementById('loading-status').innerText = `> ${text}`;
-            console.log(text);
-        }
-
-        // Fungsi fetch aman
-        async function safeFetch(url) {
-            try {
-                const response = await fetch(url);
-                const textData = await response.text(); 
-                return JSON.parse(textData); 
-            } catch (e) {
-                return null; 
-            }
-        }
-
-        // Fungsi Ekstraktor IG Universal (Karena struktur JSON tiap API beda-beda)
-        function extractIgData(json) {
-            if (!json) return null;
-            let videoUrl = null;
-            let thumbnail = 'profile.jpg';
-            
-            // Format AEMT & Widipe
-            if (json.result && json.result.length > 0 && json.result[0].url) {
-                videoUrl = json.result[0].url;
-            } 
-            // Format SiputZX & Ryzendesu
-            else if (json.data && json.data.length > 0 && json.data[0].url) {
-                videoUrl = json.data[0].url;
-                if(json.data[0].thumbnail) thumbnail = json.data[0].thumbnail;
-            } 
-            // Format Vreden
-            else if (json.result && json.result.url) {
-                videoUrl = json.result.url;
-            }
-
-            if (videoUrl) {
-                return { url: videoUrl, thumb: thumbnail };
-            }
-            return null;
-        }
-
         async function fetchMedia() {
             const input = document.getElementById('urlInput');
             const btn = document.getElementById('downloadBtn');
@@ -346,88 +311,65 @@
 
             if (!url) return alert("System Error: Target URL is empty!");
 
+            // Reset UI
             btn.disabled = true;
             btn.innerHTML = "PROCESSING...";
             loading.classList.remove('hidden');
             resultDiv.innerHTML = '';
             errorCard.classList.add('hidden');
-            updateStatus("Inisiasi proses...");
 
             let finalData = null;
 
             try {
-                // ==========================================
-                // TIKTOK LOGIC
-                // ==========================================
-                if (url.includes('tiktok.com')) {
-                    updateStatus("Menghubungi Server TikTok 1...");
-                    const json = await safeFetch(`https://www.tikwm.com/api/?url=${url}`);
+                // FALLBACK SYSTEM: Coba API 1 (TikWM)
+                try {
+                    const res1 = await fetch(`https://www.tikwm.com/api/?url=${url}`);
+                    const json1 = await res1.json();
                     
-                    if (json && json.code === 0) {
+                    if (json1.code === 0) {
                         const base = "https://www.tikwm.com";
                         finalData = {
-                            platform: 'TIKTOK_DATA',
-                            cover: json.data.cover.startsWith('http') ? json.data.cover : base + json.data.cover,
-                            title: json.data.title || 'Video TikTok',
-                            author: json.data.author.unique_id,
-                            videoUrl: json.data.play.startsWith('http') ? json.data.play : base + json.data.play,
-                            musicUrl: json.data.music.startsWith('http') ? json.data.music : base + json.data.music
+                            cover: json1.data.cover.startsWith('http') ? json1.data.cover : base + json1.data.cover,
+                            title: json1.data.title,
+                            author: json1.data.author.unique_id,
+                            videoUrl: json1.data.play.startsWith('http') ? json1.data.play : base + json1.data.play,
+                            musicUrl: json1.data.music.startsWith('http') ? json1.data.music : base + json1.data.music
                         };
-                        updateStatus("Data TikTok ditemukan!");
-                    } else {
-                        throw new Error("Video TikTok tidak valid, diprivat, atau dihapus.");
                     }
-                } 
-                
-                // ==========================================
-                // INSTAGRAM ULTIMATE FALLBACK LOGIC
-                // ==========================================
-                else if (url.includes('instagram.com')) {
-                    let igData = null;
-
-                    // Daftar 5 API Server yang akan dicoba berurutan
-                    const apiList = [
-                        { name: "AEMT API", url: `https://aemt.me/download/igdl?url=${url}` },
-                        { name: "Ryzendesu", url: `https://api.ryzendesu.vip/api/downloader/igdl?url=${url}` },
-                        { name: "SiputZX", url: `https://api.siputzx.my.id/api/d/igdl?url=${url}` },
-                        { name: "Vreden", url: `https://api.vreden.web.id/api/igdownload?url=${url}` },
-                        { name: "Widipe Proxy", url: `https://corsproxy.io/?${encodeURIComponent(`https://widipe.com/download/igdl?url=${url}`)}` }
-                    ];
-
-                    for (let i = 0; i < apiList.length; i++) {
-                        updateStatus(`Mencoba ${apiList[i].name}...`);
-                        const responseJSON = await safeFetch(apiList[i].url);
-                        igData = extractIgData(responseJSON);
-                        
-                        if (igData && igData.url) {
-                            updateStatus(`Sukses terhubung via ${apiList[i].name}!`);
-                            break; // Stop looping kalau sudah ketemu
-                        }
-                    }
-
-                    if (!igData || !igData.url) {
-                        throw new Error("Semua 5 server API Instagram sedang tumbang digeprek Meta/IG. Mohon bersabar dan coba lagi nanti sore/malam.");
-                    }
-
-                    finalData = {
-                        platform: 'IG_DATA',
-                        cover: igData.thumb, 
-                        title: 'Instagram Media',
-                        author: 'Instagram User',
-                        videoUrl: igData.url, 
-                        musicUrl: null 
-                    };
-                } 
-                
-                else {
-                    throw new Error("Platform tidak didukung! Masukkan link TikTok atau Instagram saja.");
+                } catch (e) {
+                    console.warn("API 1 Timeout, beralih ke server backup...");
                 }
 
-                // Render ke HTML jika berhasil
-                if (finalData) renderResult(finalData);
+                // Coba API 2 (TiklyDown) Jika API 1 Gagal
+                if (!finalData) {
+                    try {
+                        const res2 = await fetch(`https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(url)}`);
+                        const json2 = await res2.json();
+                        
+                        if (json2 && json2.video) {
+                            finalData = {
+                                cover: json2.video.cover,
+                                title: json2.title,
+                                author: json2.author.unique_id,
+                                videoUrl: json2.video.noWatermark,
+                                musicUrl: json2.music.play_url
+                            };
+                        }
+                    } catch (e) {
+                        console.warn("API 2 Gagal.");
+                    }
+                }
+
+                // Lempar Error kalau semua gagal
+                if (!finalData) {
+                    throw new Error("Semua server API sedang sibuk atau link TikTok diprivat/tidak valid.");
+                }
+
+                // Lempar ke fungsi render
+                renderResult(finalData);
 
             } catch (err) {
-                errorText.textContent = err.message || "Terjadi kesalahan internal. Silakan refresh halaman.";
+                errorText.textContent = err.message;
                 errorCard.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
@@ -436,51 +378,31 @@
             }
         }
 
-        // FUNGSI RENDER HASIL HTML
+        // FUNGSI RENDER HASIL HTML BERGAYA BRUTALISM
         function renderResult(data) {
             const resultDiv = document.getElementById('result');
+            
             const card = document.createElement('div');
             card.className = 'cyber-card result-card';
             
+            // Animasi Slide Up
             card.style.opacity = '0';
             card.style.transform = 'translateY(30px)';
             card.style.transition = 'all 0.4s ease';
 
-            setTimeout(() => { card.style.opacity = '1'; card.style.transform = 'translateY(0)'; }, 100);
-
-            let buttonsHTML = '';
-
-            if (data.platform === 'TIKTOK_DATA') {
-                buttonsHTML = `
-                    <a href="${data.videoUrl}" target="_blank" style="text-decoration: none;">
-                        <button class="cyber-button" style="background: var(--accent-primary); color: white; border-color: black; padding: 12px; font-size: 0.9rem;">
-                            VIDEO (NO WM)
-                        </button>
-                    </a>
-                    <a href="${data.musicUrl}" target="_blank" style="text-decoration: none;">
-                        <button class="cyber-button" style="background: var(--accent-tertiary); color: white; border-color: black; padding: 12px; font-size: 0.9rem;">
-                            MUSIC (MP3)
-                        </button>
-                    </a>
-                `;
-            } else if (data.platform === 'IG_DATA') {
-                buttonsHTML = `
-                    <a href="${data.videoUrl}" target="_blank" style="text-decoration: none; grid-column: span 2;">
-                        <button class="cyber-button" style="background: var(--accent-secondary); color: black; border-color: black; padding: 12px; font-size: 0.9rem;">
-                            DOWNLOAD MEDIA IG
-                        </button>
-                    </a>
-                `;
-            }
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
 
             card.innerHTML = `
                 <div class="result-header">
-                    <span>${data.platform} [HD]</span>
+                    <span>TIKTOK_DATA [HD]</span>
                     <span class="result-badge">SUCCESS</span>
                 </div>
                 <div class="result-body">
                     <div class="res-img-container">
-                        <img src="${data.cover}" alt="Cover Image" onerror="this.src='https://files.catbox.moe/1yu7kn.jpg'">
+                        <img src="${data.cover}" alt="Video Cover">
                     </div>
                     
                     <div style="margin: 15px 0; font-family: 'JetBrains Mono'; font-size: 0.8rem; border-top: 2px dashed #ccc; padding-top: 15px; padding-bottom: 5px;">
@@ -489,7 +411,16 @@
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                        ${buttonsHTML}
+                        <a href="${data.videoUrl}" target="_blank" style="text-decoration: none;">
+                            <button class="cyber-button" style="background: var(--accent-primary); color: white; border-color: black; padding: 12px; font-size: 0.9rem;">
+                                VIDEO (NO WM)
+                            </button>
+                        </a>
+                        <a href="${data.musicUrl}" target="_blank" style="text-decoration: none;">
+                            <button class="cyber-button" style="background: var(--accent-tertiary); color: white; border-color: black; padding: 12px; font-size: 0.9rem;">
+                                MUSIC (MP3)
+                            </button>
+                        </a>
                     </div>
                 </div>
             `;
