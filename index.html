@@ -73,8 +73,6 @@
         .m-btn { background: var(--accent-tertiary); }
 
         #loading { display: none; text-align: center; font-weight: bold; margin: 20px; }
-        
-        #offlineWarning { display: none; background: #ff4444; color: white; padding: 15px; border: 3px solid black; margin-bottom: 20px; font-weight: bold; font-size: 0.8rem; }
 
         /* --- FOOTER --- */
         footer { text-align: center; margin-top: 50px; }
@@ -90,11 +88,6 @@
     </div>
 
     <div class="container">
-        
-        <div id="offlineWarning">
-            ⚠️ PERINGATAN: Fitur download kemungkinan besar error karena dibuka secara offline. Gunakan aplikasi Acode untuk local server atau upload ke Web Hosting!
-        </div>
-
         <div class="cyber-card">
             <h1 style="font-weight: 900; margin-bottom: 10px;">RISYADH DL</h1>
             <p style="margin-bottom: 20px; font-size: 0.8rem;">PASTE LINK TIKTOK DI BAWAH:</p>
@@ -103,7 +96,7 @@
             <button onclick="prosesData()" id="btnAction" class="cyber-button">INITIATE DOWNLOAD</button>
         </div>
 
-        <div id="loading">SEDANG MEMPROSES DATA...</div>
+        <div id="loading">SEDANG MENCARI SERVER TERBAIK...</div>
         <div id="result"></div>
 
         <footer>
@@ -112,13 +105,6 @@
     </div>
 
     <script>
-        // Cek apakah web dibuka offline lewat ZArchiver
-        window.onload = function() {
-            if (window.location.protocol.startsWith('file') || window.location.protocol.startsWith('content')) {
-                document.getElementById('offlineWarning').style.display = 'block';
-            }
-        };
-
         async function prosesData() {
             const url = document.getElementById('urlInput').value.trim();
             const btn = document.getElementById('btnAction');
@@ -131,48 +117,74 @@
             loader.style.display = "block";
             resultDiv.innerHTML = "";
 
+            let finalData = null;
+
             try {
-                // 1. URL asli API TikWM (menggunakan trik cache-buster dengan Date.now agar tidak menyangkut di proxy)
-                const apiUrl = `https://www.tikwm.com/api/?url=${url}&_t=${Date.now()}`;
+                // Trik: Menggunakan Sistem Fallback (Coba API 1, kalau gagal coba API 2)
                 
-                // 2. Bungkus menggunakan AllOrigins Proxy API (Dijamin aman untuk Localhost)
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
-                
-                // 3. Tarik datanya
-                const response = await fetch(proxyUrl);
-                
-                if (!response.ok) throw new Error("Terjadi masalah pada Proxy Server.");
-                const res = await response.json();
-                
-                if (res.code !== 0) {
-                    throw new Error("Link TikTok tidak valid, diprivat, atau dihapus.");
+                // MCOBA API 1 (TikWM Direct)
+                try {
+                    console.log("Mencoba API 1 (TikWM)...");
+                    const res1 = await fetch(`https://www.tikwm.com/api/?url=${url}`);
+                    const json1 = await res1.json();
+                    
+                    if (json1.code === 0) {
+                        const base = "https://www.tikwm.com";
+                        finalData = {
+                            cover: json1.data.cover.startsWith('http') ? json1.data.cover : base + json1.data.cover,
+                            title: json1.data.title,
+                            author: json1.data.author.unique_id,
+                            videoUrl: json1.data.play.startsWith('http') ? json1.data.play : base + json1.data.play,
+                            musicUrl: json1.data.music.startsWith('http') ? json1.data.music : base + json1.data.music
+                        };
+                    }
+                } catch (e) {
+                    console.warn("API 1 Gagal, beralih ke API 2...");
                 }
 
-                const data = res.data;
-                const base = "https://www.tikwm.com";
+                // MENCOBA API 2 (TiklyDown) jika API 1 gagal
+                if (!finalData) {
+                    try {
+                        console.log("Mencoba API 2 (TiklyDown)...");
+                        const res2 = await fetch(`https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(url)}`);
+                        const json2 = await res2.json();
+                        
+                        if (json2 && json2.video) {
+                            finalData = {
+                                cover: json2.video.cover,
+                                title: json2.title,
+                                author: json2.author.unique_id,
+                                videoUrl: json2.video.noWatermark,
+                                musicUrl: json2.music.play_url
+                            };
+                        }
+                    } catch (e) {
+                        console.warn("API 2 Gagal.");
+                    }
+                }
 
-                // Pengecekan URL agar tidak double domain
-                const coverImg = data.cover.startsWith('http') ? data.cover : base + data.cover;
-                const playUrl = data.play.startsWith('http') ? data.play : base + data.play;
-                const musicUrl = data.music.startsWith('http') ? data.music : base + data.music;
+                // Jika kedua API gagal
+                if (!finalData) {
+                    throw new Error("Semua server API sedang sibuk atau link TikTok diprivat/tidak valid.");
+                }
 
-                // 4. Tampilkan Hasil
+                // TAMPILKAN HASIL
                 resultDiv.innerHTML = `
                     <div class="res-card">
-                        <img src="${coverImg}" class="res-img" alt="Cover Video">
+                        <img src="${finalData.cover}" class="res-img" alt="Cover Video">
                         <div class="res-info">
-                            <strong>TITLE:</strong> ${data.title || 'No Title'}<br>
-                            <strong>AUTHOR:</strong> @${data.author ? data.author.unique_id : 'Unknown'}
+                            <strong>TITLE:</strong> ${finalData.title || 'No Title'}<br>
+                            <strong>AUTHOR:</strong> @${finalData.author || 'Unknown'}
                         </div>
                         <div class="dl-group">
-                            <a href="${playUrl}" target="_blank" class="dl-btn v-btn">VIDEO (NO WM)</a>
-                            <a href="${musicUrl}" target="_blank" class="dl-btn m-btn">MUSIC (MP3)</a>
+                            <a href="${finalData.videoUrl}" target="_blank" class="dl-btn v-btn">VIDEO (NO WM)</a>
+                            <a href="${finalData.musicUrl}" target="_blank" class="dl-btn m-btn">MUSIC (MP3)</a>
                         </div>
                     </div>
                 `;
 
             } catch (err) {
-                alert("Error saat mengambil data: " + err.message + "\n\nPastikan koneksi aman, matikan VPN (jika ada), dan coba link lain.");
+                alert("Error: " + err.message);
                 console.error(err);
             } finally {
                 btn.disabled = false;
