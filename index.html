@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RISYADH - MEDIA DOWNLOADER ULTRA</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&family=Space+Grotesk:wght@300;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #e0e0e0;
+            --main-black: #0a0a0a;
+            --card-bg: #ffffff;
+            --accent-primary: #6a0dad;
+            --accent-secondary: #ccff00;
+            --accent-tertiary: #ff5f00;
+            --font-head: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-head);
+            background-color: var(--bg-color);
+            color: var(--main-black);
+            min-height: 100vh;
+            padding-bottom: 50px;
+            background-image: linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* --- UI ELEMENTS --- */
+        .marquee-top {
+            background: var(--main-black); color: white;
+            padding: 10px 0; overflow: hidden; font-family: var(--font-mono); font-size: 0.8rem;
+        }
+        .marquee-content { display: inline-block; white-space: nowrap; animation: marquee 20s linear infinite; }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+        .container { max-width: 600px; margin: 40px auto; padding: 0 20px; }
+        
+        .cyber-card {
+            background: var(--card-bg);
+            border: 3px solid var(--main-black);
+            box-shadow: 8px 8px 0px var(--main-black);
+            padding: 25px; margin-bottom: 30px;
+        }
+
+        .cyber-input {
+            width: 100%; padding: 15px; border: 3px solid var(--main-black);
+            font-family: var(--font-mono); font-weight: bold; outline: none; margin-bottom: 20px;
+        }
+
+        .cyber-button {
+            width: 100%; padding: 15px; background: var(--accent-secondary);
+            border: 3px solid var(--main-black); font-weight: 900; cursor: pointer;
+            box-shadow: 4px 4px 0px var(--main-black); transition: 0.2s;
+        }
+        .cyber-button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px var(--main-black); }
+
+        /* --- RESULT AREA --- */
+        #result { margin-top: 20px; }
+        .res-card { background: white; border: 3px solid var(--main-black); margin-bottom: 20px; overflow: hidden; }
+        .res-img { width: 100%; border-bottom: 3px solid var(--main-black); display: block; object-fit: cover; max-height: 400px; }
+        .res-info { padding: 15px; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.5; }
+        
+        .dl-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
+        .dl-btn {
+            text-decoration: none; color: white; text-align: center; padding: 10px;
+            font-weight: bold; border: 2px solid #000; font-size: 0.8rem;
+        }
+        .v-btn { background: var(--accent-primary); }
+        .m-btn { background: var(--accent-tertiary); }
+
+        #loading { display: none; text-align: center; font-weight: bold; margin: 20px; }
+        
+        #offlineWarning { display: none; background: #ff4444; color: white; padding: 15px; border: 3px solid black; margin-bottom: 20px; font-weight: bold; font-size: 0.8rem; }
+
+        /* --- FOOTER --- */
+        footer { text-align: center; margin-top: 50px; }
+        .highlight { background: var(--main-black); color: white; padding: 2px 8px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="marquee-top">
+        <div class="marquee-content">
+            SYSTEM READY • NO WATERMARK • RISYADH • FAST DOWNLOAD • SECURE • RISYADH • SYSTEM READY • NO WATERMARK • RISYADH • FAST DOWNLOAD • SECURE •
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <div id="offlineWarning">
+            ⚠️ PERINGATAN: Fitur download kemungkinan besar error karena dibuka secara offline. Gunakan aplikasi Acode untuk local server atau upload ke Web Hosting!
+        </div>
+
+        <div class="cyber-card">
+            <h1 style="font-weight: 900; margin-bottom: 10px;">RISYADH DL</h1>
+            <p style="margin-bottom: 20px; font-size: 0.8rem;">PASTE LINK TIKTOK DI BAWAH:</p>
+            
+            <input type="text" id="urlInput" class="cyber-input" placeholder="https://vt.tiktok.com/xxxx/">
+            <button onclick="prosesData()" id="btnAction" class="cyber-button">INITIATE DOWNLOAD</button>
+        </div>
+
+        <div id="loading">SEDANG MEMPROSES DATA...</div>
+        <div id="result"></div>
+
+        <footer>
+            <p>POWERED BY <span class="highlight">RISYADH</span></p>
+        </footer>
+    </div>
+
+    <script>
+        // Cek apakah web dibuka offline lewat ZArchiver
+        window.onload = function() {
+            if (window.location.protocol.startsWith('file') || window.location.protocol.startsWith('content')) {
+                document.getElementById('offlineWarning').style.display = 'block';
+            }
+        };
+
+        async function prosesData() {
+            const url = document.getElementById('urlInput').value.trim();
+            const btn = document.getElementById('btnAction');
+            const resultDiv = document.getElementById('result');
+            const loader = document.getElementById('loading');
+
+            if (!url) return alert("Masukkan link dulu!");
+
+            btn.disabled = true;
+            loader.style.display = "block";
+            resultDiv.innerHTML = "";
+
+            try {
+                // 1. URL asli API TikWM (menggunakan trik cache-buster dengan Date.now agar tidak menyangkut di proxy)
+                const apiUrl = `https://www.tikwm.com/api/?url=${url}&_t=${Date.now()}`;
+                
+                // 2. Bungkus menggunakan AllOrigins Proxy API (Dijamin aman untuk Localhost)
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
+                
+                // 3. Tarik datanya
+                const response = await fetch(proxyUrl);
+                
+                if (!response.ok) throw new Error("Terjadi masalah pada Proxy Server.");
+                const res = await response.json();
+                
+                if (res.code !== 0) {
+                    throw new Error("Link TikTok tidak valid, diprivat, atau dihapus.");
+                }
+
+                const data = res.data;
+                const base = "https://www.tikwm.com";
+
+                // Pengecekan URL agar tidak double domain
+                const coverImg = data.cover.startsWith('http') ? data.cover : base + data.cover;
+                const playUrl = data.play.startsWith('http') ? data.play : base + data.play;
+                const musicUrl = data.music.startsWith('http') ? data.music : base + data.music;
+
+                // 4. Tampilkan Hasil
+                resultDiv.innerHTML = `
+                    <div class="res-card">
+                        <img src="${coverImg}" class="res-img" alt="Cover Video">
+                        <div class="res-info">
+                            <strong>TITLE:</strong> ${data.title || 'No Title'}<br>
+                            <strong>AUTHOR:</strong> @${data.author ? data.author.unique_id : 'Unknown'}
+                        </div>
+                        <div class="dl-group">
+                            <a href="${playUrl}" target="_blank" class="dl-btn v-btn">VIDEO (NO WM)</a>
+                            <a href="${musicUrl}" target="_blank" class="dl-btn m-btn">MUSIC (MP3)</a>
+                        </div>
+                    </div>
+                `;
+
+            } catch (err) {
+                alert("Error saat mengambil data: " + err.message + "\n\nPastikan koneksi aman, matikan VPN (jika ada), dan coba link lain.");
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                loader.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
