@@ -224,7 +224,7 @@
 
     <div class="marquee-top">
         <div class="marquee-content">
-            SYSTEM READY • V.4.0 ULTRA • MULTI DOWNLOADER • TIKTOK • YOUTUBE • INSTAGRAM • RISYADH •
+            SYSTEM READY • V.4.1 ULTRA • MULTI DOWNLOADER • TIKTOK • YOUTUBE • INSTAGRAM • RISYADH •
         </div>
     </div>
 
@@ -290,6 +290,22 @@
     </div>
 
     <script>
+        // Fungsi Smart Fetch: Coba tembak langsung, kalau gagal karena CORS baru pakai proxy
+        async function smartFetch(apiUrl) {
+            try {
+                // Mencoba langsung (Paling Cepat)
+                const res = await fetch(apiUrl);
+                if (!res.ok) throw new Error("HTTP Error");
+                return await res.json();
+            } catch (e) {
+                // Menggunakan Fast Proxy (CorsProxy.io) jika diblokir
+                console.log("Direct fetch gagal, beralih ke Fast Proxy...");
+                const proxyUrl = "https://corsproxy.io/?";
+                const resProxy = await fetch(proxyUrl + encodeURIComponent(apiUrl));
+                return await resProxy.json();
+            }
+        }
+
         async function fetchMedia() {
             const input = document.getElementById('urlInput');
             const btn = document.getElementById('downloadBtn');
@@ -309,17 +325,14 @@
             errorCard.classList.add('hidden');
 
             let finalData = null;
-            // CORS Proxy untuk membungkus API yang ketat
-            const corsProxy = "https://api.allorigins.win/raw?url=";
 
             try {
                 // ---- DETEKSI PLATFORM DARI URL ----
 
-                // 1. TIKTOK LOGIC (Tidak butuh proxy)
+                // 1. TIKTOK LOGIC
                 if (url.includes('tiktok.com')) {
                     try {
-                        const res1 = await fetch(`https://www.tikwm.com/api/?url=${url}`);
-                        const json1 = await res1.json();
+                        const json1 = await smartFetch(`https://www.tikwm.com/api/?url=${url}`);
                         if (json1.code === 0) {
                             const base = "https://www.tikwm.com";
                             finalData = {
@@ -332,8 +345,7 @@
                             };
                         }
                     } catch (e) {
-                        const res2 = await fetch(`https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(url)}`);
-                        const json2 = await res2.json();
+                        const json2 = await smartFetch(`https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(url)}`);
                         if (json2 && json2.video) {
                             finalData = {
                                 platform: 'TIKTOK_DATA', cover: json2.video.cover, title: json2.title,
@@ -343,16 +355,10 @@
                     }
                 } 
                 
-                // 2. YOUTUBE LOGIC (DIBUNGKUS CORS PROXY)
+                // 2. YOUTUBE LOGIC
                 else if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                    const apiVidUrl = `https://widipe.com/download/ytdl?url=${url}`;
-                    const apiAudUrl = `https://widipe.com/download/ytmp3?url=${url}`;
-
-                    const apiVid = await fetch(corsProxy + encodeURIComponent(apiVidUrl));
-                    const apiAud = await fetch(corsProxy + encodeURIComponent(apiAudUrl));
-                    
-                    const resVid = await apiVid.json();
-                    const resAud = await apiAud.json();
+                    const resVid = await smartFetch(`https://widipe.com/download/ytdl?url=${url}`);
+                    const resAud = await smartFetch(`https://widipe.com/download/ytmp3?url=${url}`);
 
                     if(!resVid.status) throw new Error("Video YouTube tidak ditemukan atau diprivat.");
 
@@ -366,11 +372,9 @@
                     };
                 } 
                 
-                // 3. INSTAGRAM LOGIC (DIBUNGKUS CORS PROXY)
+                // 3. INSTAGRAM LOGIC
                 else if (url.includes('instagram.com')) {
-                    const apiIGUrl = `https://widipe.com/download/igdl?url=${url}`;
-                    const apiIG = await fetch(corsProxy + encodeURIComponent(apiIGUrl));
-                    const resIG = await apiIG.json();
+                    const resIG = await smartFetch(`https://widipe.com/download/igdl?url=${url}`);
 
                     if(!resIG.status || !resIG.result || resIG.result.length === 0) {
                         throw new Error("Gagal mengambil data Instagram. (Pastikan akun tidak diprivat/terkunci).");
@@ -378,7 +382,7 @@
 
                     finalData = {
                         platform: 'IG_DATA',
-                        cover: 'profile.jpg', // Karena API IG jarang mengembalikan thumbnail
+                        cover: 'profile.jpg', 
                         title: 'Instagram Post / Reels',
                         author: 'Instagram User',
                         videoUrl: resIG.result[0].url, 
@@ -397,9 +401,8 @@
                 renderResult(finalData);
 
             } catch (err) {
-                // Biar pesannya lebih jelas kalau error
                 errorText.textContent = err.message.includes("Failed to fetch") 
-                    ? "Koneksi ke Server Proxy terputus. Coba gunakan VPN atau refresh halaman." 
+                    ? "Koneksi ke Server terputus. API mungkin sedang down, coba lagi nanti." 
                     : err.message;
                 errorCard.classList.remove('hidden');
             } finally {
