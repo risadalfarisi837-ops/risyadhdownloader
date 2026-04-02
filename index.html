@@ -224,7 +224,7 @@
 
     <div class="marquee-top">
         <div class="marquee-content">
-            SYSTEM READY • V.4.1 ULTRA • MULTI DOWNLOADER • TIKTOK • YOUTUBE • INSTAGRAM • RISYADH •
+            SYSTEM READY • V.4.2 ULTRA • MULTI DOWNLOADER • TIKTOK • YOUTUBE • INSTAGRAM • RISYADH •
         </div>
     </div>
 
@@ -290,19 +290,39 @@
     </div>
 
     <script>
-        // Fungsi Smart Fetch: Coba tembak langsung, kalau gagal karena CORS baru pakai proxy
+        // Fungsi Fetch Super Tangguh Anti-Crash
         async function smartFetch(apiUrl) {
+            
+            // Fungsi internal untuk mengambil & memastikan data adalah JSON
+            async function fetchAndParse(url) {
+                const res = await fetch(url);
+                const text = await res.text(); // Ambil sebagai teks dulu
+                try {
+                    return JSON.parse(text); // Baru diubah ke JSON
+                } catch (e) {
+                    throw new Error("NOT_JSON");
+                }
+            }
+
             try {
-                // Mencoba langsung (Paling Cepat)
-                const res = await fetch(apiUrl);
-                if (!res.ok) throw new Error("HTTP Error");
-                return await res.json();
-            } catch (e) {
-                // Menggunakan Fast Proxy (CorsProxy.io) jika diblokir
-                console.log("Direct fetch gagal, beralih ke Fast Proxy...");
-                const proxyUrl = "https://corsproxy.io/?";
-                const resProxy = await fetch(proxyUrl + encodeURIComponent(apiUrl));
-                return await resProxy.json();
+                // 1. Tembak Langsung (Tanpa Proxy)
+                return await fetchAndParse(apiUrl);
+            } catch (err) {
+                console.log("Direct gagal, mencoba Proxy CodeTabs...");
+                try {
+                    // 2. Tembak pakai Proxy CodeTabs (Paling Aman)
+                    const proxyUrl = "https://api.codetabs.com/v1/proxy?quest=";
+                    return await fetchAndParse(proxyUrl + encodeURIComponent(apiUrl));
+                } catch (err2) {
+                    console.log("Proxy 1 gagal, mencoba Proxy AllOrigins...");
+                    try {
+                        // 3. Tembak pakai Proxy AllOrigins (Cadangan)
+                        const proxyUrl2 = "https://api.allorigins.win/raw?url=";
+                        return await fetchAndParse(proxyUrl2 + encodeURIComponent(apiUrl));
+                    } catch (err3) {
+                        throw new Error("Server API Publik sedang sibuk, down, atau membatasi akses (Cloudflare). Silakan coba lagi nanti.");
+                    }
+                }
             }
         }
 
@@ -395,15 +415,13 @@
                 }
 
                 // Lempar Error kalau data kosong
-                if (!finalData) throw new Error("Server API sedang sibuk atau link tidak valid. Coba lagi nanti.");
+                if (!finalData) throw new Error("Gagal mendapatkan link download. Server API mungkin sedang gangguan.");
 
                 // Render ke HTML
                 renderResult(finalData);
 
             } catch (err) {
-                errorText.textContent = err.message.includes("Failed to fetch") 
-                    ? "Koneksi ke Server terputus. API mungkin sedang down, coba lagi nanti." 
-                    : err.message;
+                errorText.textContent = err.message;
                 errorCard.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
@@ -412,7 +430,7 @@
             }
         }
 
-        // FUNGSI RENDER HASIL HTML BERGAYA BRUTALISM DINAMIS
+        // FUNGSI RENDER HASIL HTML
         function renderResult(data) {
             const resultDiv = document.getElementById('result');
             const card = document.createElement('div');
