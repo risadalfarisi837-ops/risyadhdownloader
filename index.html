@@ -124,7 +124,6 @@
 
         .profile-section { display: flex; align-items: center; gap: 15px; }
 
-        /* AVATAR STYLING */
         .avatar-img {
             width: 60px; height: 60px;
             border: 3px solid var(--main-black);
@@ -209,6 +208,8 @@
         @keyframes scan { 0% { width: 0; } 50% { width: 100%; } 100% { width: 0; margin-left: auto; } }
         .blink-text { font-family: var(--font-mono); font-weight: bold; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.5; } }
+        
+        #loading-status { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-primary); margin-top: 10px; font-weight: bold;}
 
         /* ERROR CARD */
         .error-state { border-color: red; box-shadow: 8px 8px 0 red; }
@@ -224,7 +225,7 @@
 
     <div class="marquee-top">
         <div class="marquee-content">
-            SYSTEM READY • V.5.1 LITE • DUAL DOWNLOADER + IG FALLBACK • TIKTOK • INSTAGRAM • RISYADH •
+            SYSTEM READY • V.5.2 ULTRA • AUTO-FALLBACK ENGINE • TIKTOK • INSTAGRAM • RISYADH •
         </div>
     </div>
 
@@ -272,6 +273,7 @@
         <div id="loading" class="cyber-card hidden" style="text-align: center; padding: 40px;">
             <div class="scanner"></div>
             <p class="blink-text">PROCESSING DATA STREAM...</p>
+            <div id="loading-status">> Menghubungkan ke server...</div>
         </div>
 
         <div id="error-msg" class="cyber-card error-state hidden">
@@ -290,6 +292,12 @@
     </div>
 
     <script>
+        // Fungsi Update Teks Status Loading
+        function updateStatus(text) {
+            document.getElementById('loading-status').innerText = `> ${text}`;
+            console.log(text);
+        }
+
         // Fungsi fetch aman
         async function safeFetch(url) {
             try {
@@ -299,6 +307,32 @@
             } catch (e) {
                 return null; 
             }
+        }
+
+        // Fungsi Ekstraktor IG Universal (Karena struktur JSON tiap API beda-beda)
+        function extractIgData(json) {
+            if (!json) return null;
+            let videoUrl = null;
+            let thumbnail = 'profile.jpg';
+            
+            // Format AEMT & Widipe
+            if (json.result && json.result.length > 0 && json.result[0].url) {
+                videoUrl = json.result[0].url;
+            } 
+            // Format SiputZX & Ryzendesu
+            else if (json.data && json.data.length > 0 && json.data[0].url) {
+                videoUrl = json.data[0].url;
+                if(json.data[0].thumbnail) thumbnail = json.data[0].thumbnail;
+            } 
+            // Format Vreden
+            else if (json.result && json.result.url) {
+                videoUrl = json.result.url;
+            }
+
+            if (videoUrl) {
+                return { url: videoUrl, thumb: thumbnail };
+            }
+            return null;
         }
 
         async function fetchMedia() {
@@ -317,6 +351,7 @@
             loading.classList.remove('hidden');
             resultDiv.innerHTML = '';
             errorCard.classList.add('hidden');
+            updateStatus("Inisiasi proses...");
 
             let finalData = null;
 
@@ -325,6 +360,7 @@
                 // TIKTOK LOGIC
                 // ==========================================
                 if (url.includes('tiktok.com')) {
+                    updateStatus("Menghubungi Server TikTok 1...");
                     const json = await safeFetch(`https://www.tikwm.com/api/?url=${url}`);
                     
                     if (json && json.code === 0) {
@@ -337,63 +373,48 @@
                             videoUrl: json.data.play.startsWith('http') ? json.data.play : base + json.data.play,
                             musicUrl: json.data.music.startsWith('http') ? json.data.music : base + json.data.music
                         };
+                        updateStatus("Data TikTok ditemukan!");
                     } else {
                         throw new Error("Video TikTok tidak valid, diprivat, atau dihapus.");
                     }
                 } 
                 
                 // ==========================================
-                // INSTAGRAM MULTI-API FALLBACK LOGIC
+                // INSTAGRAM ULTIMATE FALLBACK LOGIC
                 // ==========================================
                 else if (url.includes('instagram.com')) {
-                    
-                    let igVideoUrl = null;
-                    let igThumbnail = 'profile.jpg'; // default cover
+                    let igData = null;
 
-                    // Coba API 1: SiputZX
-                    try {
-                        console.log("Mencoba API IG 1 (SiputZX)...");
-                        const res1 = await safeFetch(`https://api.siputzx.my.id/api/d/igdl?url=${url}`);
-                        if (res1 && res1.data && res1.data.length > 0) {
-                            igVideoUrl = res1.data[0].url;
+                    // Daftar 5 API Server yang akan dicoba berurutan
+                    const apiList = [
+                        { name: "AEMT API", url: `https://aemt.me/download/igdl?url=${url}` },
+                        { name: "Ryzendesu", url: `https://api.ryzendesu.vip/api/downloader/igdl?url=${url}` },
+                        { name: "SiputZX", url: `https://api.siputzx.my.id/api/d/igdl?url=${url}` },
+                        { name: "Vreden", url: `https://api.vreden.web.id/api/igdownload?url=${url}` },
+                        { name: "Widipe Proxy", url: `https://corsproxy.io/?${encodeURIComponent(`https://widipe.com/download/igdl?url=${url}`)}` }
+                    ];
+
+                    for (let i = 0; i < apiList.length; i++) {
+                        updateStatus(`Mencoba ${apiList[i].name}...`);
+                        const responseJSON = await safeFetch(apiList[i].url);
+                        igData = extractIgData(responseJSON);
+                        
+                        if (igData && igData.url) {
+                            updateStatus(`Sukses terhubung via ${apiList[i].name}!`);
+                            break; // Stop looping kalau sudah ketemu
                         }
-                    } catch(e) {}
-
-                    // Coba API 2: Ryzendesu (Kalau API 1 gagal)
-                    if (!igVideoUrl) {
-                        try {
-                            console.log("Mencoba API IG 2 (Ryzendesu)...");
-                            const res2 = await safeFetch(`https://api.ryzendesu.vip/api/downloader/igdl?url=${url}`);
-                            if (res2 && res2.data && res2.data.length > 0) {
-                                igVideoUrl = res2.data[0].url;
-                                if(res2.data[0].thumbnail) igThumbnail = res2.data[0].thumbnail;
-                            }
-                        } catch(e) {}
                     }
 
-                    // Coba API 3: Widipe via Proxy (Kalau API 1 & 2 gagal total)
-                    if (!igVideoUrl) {
-                        try {
-                            console.log("Mencoba API IG 3 (Widipe + Proxy)...");
-                            const proxyUrl = "https://corsproxy.io/?";
-                            const res3 = await safeFetch(proxyUrl + encodeURIComponent(`https://widipe.com/download/igdl?url=${url}`));
-                            if (res3 && res3.status && res3.result && res3.result.length > 0) {
-                                igVideoUrl = res3.result[0].url;
-                            }
-                        } catch(e) {}
-                    }
-
-                    // Pengecekan Terakhir
-                    if (!igVideoUrl) {
-                        throw new Error("Gagal mengambil Instagram. Semua server API saat ini sedang down/dibatasi oleh Instagram. Silakan coba beberapa jam lagi.");
+                    if (!igData || !igData.url) {
+                        throw new Error("Semua 5 server API Instagram sedang tumbang digeprek Meta/IG. Mohon bersabar dan coba lagi nanti sore/malam.");
                     }
 
                     finalData = {
                         platform: 'IG_DATA',
-                        cover: igThumbnail, 
+                        cover: igData.thumb, 
                         title: 'Instagram Media',
                         author: 'Instagram User',
-                        videoUrl: igVideoUrl, 
+                        videoUrl: igData.url, 
                         musicUrl: null 
                     };
                 } 
@@ -403,10 +424,10 @@
                 }
 
                 // Render ke HTML jika berhasil
-                renderResult(finalData);
+                if (finalData) renderResult(finalData);
 
             } catch (err) {
-                errorText.textContent = err.message;
+                errorText.textContent = err.message || "Terjadi kesalahan internal. Silakan refresh halaman.";
                 errorCard.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
