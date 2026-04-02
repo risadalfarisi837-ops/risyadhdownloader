@@ -244,7 +244,7 @@
 
             <div class="card-header-visual">
                 <div class="profile-section">
-                    <img src="https://files.catbox.moe/1yu7kn.jpg" alt="User Profile" class="avatar-img" id="userAvatar">
+                    <img src="profile.jpg" alt="User Profile" class="avatar-img" id="userAvatar" onerror="this.src='https://files.catbox.moe/1yu7kn.jpg'">
                     <div class="profile-info">
                         <span class="user-role">RISYADH DOWNLOADER</span>
                         <span class="user-action">PASTE YOUR LINK BELOW</span>
@@ -309,11 +309,13 @@
             errorCard.classList.add('hidden');
 
             let finalData = null;
+            // CORS Proxy untuk membungkus API yang ketat
+            const corsProxy = "https://api.allorigins.win/raw?url=";
 
             try {
                 // ---- DETEKSI PLATFORM DARI URL ----
 
-                // 1. TIKTOK LOGIC
+                // 1. TIKTOK LOGIC (Tidak butuh proxy)
                 if (url.includes('tiktok.com')) {
                     try {
                         const res1 = await fetch(`https://www.tikwm.com/api/?url=${url}`);
@@ -341,11 +343,14 @@
                     }
                 } 
                 
-                // 2. YOUTUBE LOGIC
+                // 2. YOUTUBE LOGIC (DIBUNGKUS CORS PROXY)
                 else if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                    // Menggunakan API Widipe untuk YouTube
-                    const apiVid = await fetch(`https://widipe.com/download/ytdl?url=${url}`);
-                    const apiAud = await fetch(`https://widipe.com/download/ytmp3?url=${url}`);
+                    const apiVidUrl = `https://widipe.com/download/ytdl?url=${url}`;
+                    const apiAudUrl = `https://widipe.com/download/ytmp3?url=${url}`;
+
+                    const apiVid = await fetch(corsProxy + encodeURIComponent(apiVidUrl));
+                    const apiAud = await fetch(corsProxy + encodeURIComponent(apiAudUrl));
+                    
                     const resVid = await apiVid.json();
                     const resAud = await apiAud.json();
 
@@ -353,7 +358,7 @@
 
                     finalData = {
                         platform: 'YOUTUBE_DATA',
-                        cover: resVid.result.thumb || 'https://files.catbox.moe/1yu7kn.jpg',
+                        cover: resVid.result.thumb || 'profile.jpg',
                         title: resVid.result.title || 'YouTube Video',
                         author: 'YouTube Channel',
                         videoUrl: resVid.result.url,
@@ -361,10 +366,10 @@
                     };
                 } 
                 
-                // 3. INSTAGRAM LOGIC
+                // 3. INSTAGRAM LOGIC (DIBUNGKUS CORS PROXY)
                 else if (url.includes('instagram.com')) {
-                    // Menggunakan API Widipe untuk Instagram
-                    const apiIG = await fetch(`https://widipe.com/download/igdl?url=${url}`);
+                    const apiIGUrl = `https://widipe.com/download/igdl?url=${url}`;
+                    const apiIG = await fetch(corsProxy + encodeURIComponent(apiIGUrl));
                     const resIG = await apiIG.json();
 
                     if(!resIG.status || !resIG.result || resIG.result.length === 0) {
@@ -373,11 +378,11 @@
 
                     finalData = {
                         platform: 'IG_DATA',
-                        cover: 'https://files.catbox.moe/1yu7kn.jpg', // Karena API IG jarang mengembalikan thumbnail
+                        cover: 'profile.jpg', // Karena API IG jarang mengembalikan thumbnail
                         title: 'Instagram Post / Reels',
                         author: 'Instagram User',
-                        videoUrl: resIG.result[0].url, // Mengambil media pertama
-                        musicUrl: null // IG tidak memisahkan lagu, jadi kita hilangkan tombolnya
+                        videoUrl: resIG.result[0].url, 
+                        musicUrl: null 
                     };
                 } 
                 
@@ -385,14 +390,17 @@
                     throw new Error("Platform tidak didukung! Masukkan link TikTok, YouTube, atau Instagram.");
                 }
 
-                // Lempar Error kalau semua API gagal
+                // Lempar Error kalau data kosong
                 if (!finalData) throw new Error("Server API sedang sibuk atau link tidak valid. Coba lagi nanti.");
 
-                // Lempar ke fungsi render
+                // Render ke HTML
                 renderResult(finalData);
 
             } catch (err) {
-                errorText.textContent = err.message;
+                // Biar pesannya lebih jelas kalau error
+                errorText.textContent = err.message.includes("Failed to fetch") 
+                    ? "Koneksi ke Server Proxy terputus. Coba gunakan VPN atau refresh halaman." 
+                    : err.message;
                 errorCard.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
@@ -413,7 +421,6 @@
 
             setTimeout(() => { card.style.opacity = '1'; card.style.transform = 'translateY(0)'; }, 100);
 
-            // Menyiapkan tombol secara dinamis tergantung platformnya
             let buttonsHTML = '';
 
             if (data.platform === 'TIKTOK_DATA') {
@@ -478,4 +485,3 @@
     </script>
 </body>
 </html>
-
