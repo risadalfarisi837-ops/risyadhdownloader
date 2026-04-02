@@ -224,7 +224,7 @@
 
     <div class="marquee-top">
         <div class="marquee-content">
-            SYSTEM READY • V.4.3 ULTRA • PROXY-FREE ENGINE • TIKTOK • YOUTUBE • INSTAGRAM • RISYADH •
+            SYSTEM READY • V.5.0 LITE • DUAL DOWNLOADER • TIKTOK • INSTAGRAM • RISYADH •
         </div>
     </div>
 
@@ -260,7 +260,7 @@
                 </div>
 
                 <div class="platform-tags">
-                    <span>#TIKTOK</span> <span>#YOUTUBE</span> <span>#INSTAGRAM</span>
+                    <span>#TIKTOK</span> <span>#INSTAGRAM</span>
                 </div>
                 
                 <button id="downloadBtn" onclick="fetchMedia()" class="cyber-button">
@@ -284,20 +284,22 @@
         <footer class="risyadh-footer">
             <div class="footer-line"></div>
             <p>POWERED BY <span class="risyadh-highlight">RISYADH</span></p>
-            <p style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">ENGINEERED FOR MULTI-PLATFORM</p>
+            <p style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">ENGINEERED FOR STABILITY</p>
         </footer>
 
     </div>
 
     <script>
-        // Fungsi fetch sederhana, anti-crash kalau server API ngirim HTML error
-        async function fetchDirect(url) {
+        // Fungsi fetch sederhana yang sangat aman
+        async function safeFetch(url) {
             try {
                 const response = await fetch(url);
                 const textData = await response.text(); 
-                return JSON.parse(textData); // Ubah ke JSON dengan aman
+                
+                // Mencoba mengubah ke JSON. Kalau gagal (berarti ngirim HTML), akan masuk ke catch.
+                return JSON.parse(textData); 
             } catch (e) {
-                return null; // Kalau gagal / ngirim HTML error, kembalikan null
+                return null; // Mengembalikan null tanpa error yang aneh-aneh
             }
         }
 
@@ -323,57 +325,40 @@
 
             try {
                 // ==========================================
-                // LOGIC SEDERHANA: LANGSUNG TEMBAK API (TANPA PROXY)
+                // TIKTOK & INSTAGRAM LOGIC SAJA
                 // ==========================================
 
-                // 1. TIKTOK (Menggunakan TikWM)
                 if (url.includes('tiktok.com')) {
-                    const json = await fetchDirect(`https://www.tikwm.com/api/?url=${url}`);
+                    // API TIKTOK (TikWM)
+                    const json = await safeFetch(`https://www.tikwm.com/api/?url=${url}`);
                     
                     if (json && json.code === 0) {
                         const base = "https://www.tikwm.com";
                         finalData = {
                             platform: 'TIKTOK_DATA',
                             cover: json.data.cover.startsWith('http') ? json.data.cover : base + json.data.cover,
-                            title: json.data.title,
+                            title: json.data.title || 'Video TikTok',
                             author: json.data.author.unique_id,
                             videoUrl: json.data.play.startsWith('http') ? json.data.play : base + json.data.play,
                             musicUrl: json.data.music.startsWith('http') ? json.data.music : base + json.data.music
                         };
                     } else {
-                        throw new Error("Video TikTok tidak valid, diprivat, atau dihapus.");
+                        throw new Error("Video TikTok tidak valid, diprivat, atau URL salah.");
                     }
                 } 
                 
-                // 2. YOUTUBE (Menggunakan Ryzendesu API)
-                else if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                    const jsonVid = await fetchDirect(`https://api.ryzendesu.vip/api/downloader/ytmp4?url=${url}`);
-                    const jsonAud = await fetchDirect(`https://api.ryzendesu.vip/api/downloader/ytmp3?url=${url}`);
-
-                    if (!jsonVid || !jsonVid.url) throw new Error("Video YouTube tidak ditemukan atau diprivat.");
-
-                    finalData = {
-                        platform: 'YOUTUBE_DATA',
-                        cover: jsonVid.thumbnail || 'profile.jpg',
-                        title: jsonVid.title || 'YouTube Video',
-                        author: 'YouTube',
-                        videoUrl: jsonVid.url,
-                        musicUrl: jsonAud ? jsonAud.url : null
-                    };
-                } 
-                
-                // 3. INSTAGRAM (Menggunakan Ryzendesu API)
                 else if (url.includes('instagram.com')) {
-                    const jsonIG = await fetchDirect(`https://api.ryzendesu.vip/api/downloader/igdl?url=${url}`);
+                    // API INSTAGRAM (Ryzendesu)
+                    const jsonIG = await safeFetch(`https://api.ryzendesu.vip/api/downloader/igdl?url=${url}`);
 
                     if (!jsonIG || !jsonIG.data || jsonIG.data.length === 0) {
-                        throw new Error("Gagal mengambil data Instagram (Pastikan akun tidak diprivat/terkunci).");
+                        throw new Error("Gagal mengambil data Instagram. Pastikan akun IG tersebut tidak diprivat/terkunci.");
                     }
 
                     finalData = {
                         platform: 'IG_DATA',
-                        cover: 'profile.jpg', 
-                        title: 'Instagram Post / Reels',
+                        cover: jsonIG.data[0].thumbnail || 'profile.jpg', // Jika ada thumbnail, pakai itu
+                        title: 'Instagram Media',
                         author: 'Instagram User',
                         videoUrl: jsonIG.data[0].url, 
                         musicUrl: null 
@@ -381,15 +366,15 @@
                 } 
                 
                 else {
-                    throw new Error("Platform tidak didukung! Masukkan link TikTok, YouTube, atau Instagram.");
+                    throw new Error("Platform tidak didukung! Masukkan link TikTok atau Instagram saja.");
                 }
 
-                // Render ke HTML
+                // Render ke HTML jika berhasil
                 renderResult(finalData);
 
             } catch (err) {
-                // Menangkap pesan error agar tidak muncul 'Unexpected token <'
-                errorText.textContent = err.message;
+                // Tampilkan pesan error yang ramah manusia (bukan token <)
+                errorText.textContent = err.message || "Server sedang sibuk atau URL salah.";
                 errorCard.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
@@ -425,25 +410,11 @@
                         </button>
                     </a>
                 `;
-            } else if (data.platform === 'YOUTUBE_DATA') {
-                buttonsHTML = `
-                    <a href="${data.videoUrl}" target="_blank" style="text-decoration: none;">
-                        <button class="cyber-button" style="background: var(--accent-primary); color: white; border-color: black; padding: 12px; font-size: 0.9rem;">
-                            VIDEO (MP4)
-                        </button>
-                    </a>
-                    ${data.musicUrl ? `
-                    <a href="${data.musicUrl}" target="_blank" style="text-decoration: none;">
-                        <button class="cyber-button" style="background: var(--accent-tertiary); color: white; border-color: black; padding: 12px; font-size: 0.9rem;">
-                            AUDIO (MP3)
-                        </button>
-                    </a>` : ''}
-                `;
             } else if (data.platform === 'IG_DATA') {
                 buttonsHTML = `
                     <a href="${data.videoUrl}" target="_blank" style="text-decoration: none; grid-column: span 2;">
                         <button class="cyber-button" style="background: var(--accent-secondary); color: black; border-color: black; padding: 12px; font-size: 0.9rem;">
-                            DOWNLOAD MEDIA (MP4/JPG)
+                            DOWNLOAD MEDIA IG
                         </button>
                     </a>
                 `;
