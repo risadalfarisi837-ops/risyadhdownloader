@@ -224,7 +224,7 @@
 
     <div class="marquee-top">
         <div class="marquee-content">
-            SYSTEM READY • V.5.0 LITE • DUAL DOWNLOADER • TIKTOK • INSTAGRAM • RISYADH •
+            SYSTEM READY • V.5.1 LITE • DUAL DOWNLOADER + IG FALLBACK • TIKTOK • INSTAGRAM • RISYADH •
         </div>
     </div>
 
@@ -290,16 +290,14 @@
     </div>
 
     <script>
-        // Fungsi fetch sederhana yang sangat aman
+        // Fungsi fetch aman
         async function safeFetch(url) {
             try {
                 const response = await fetch(url);
                 const textData = await response.text(); 
-                
-                // Mencoba mengubah ke JSON. Kalau gagal (berarti ngirim HTML), akan masuk ke catch.
                 return JSON.parse(textData); 
             } catch (e) {
-                return null; // Mengembalikan null tanpa error yang aneh-aneh
+                return null; 
             }
         }
 
@@ -314,7 +312,6 @@
 
             if (!url) return alert("System Error: Target URL is empty!");
 
-            // Reset UI
             btn.disabled = true;
             btn.innerHTML = "PROCESSING...";
             loading.classList.remove('hidden');
@@ -325,11 +322,9 @@
 
             try {
                 // ==========================================
-                // TIKTOK & INSTAGRAM LOGIC SAJA
+                // TIKTOK LOGIC
                 // ==========================================
-
                 if (url.includes('tiktok.com')) {
-                    // API TIKTOK (TikWM)
                     const json = await safeFetch(`https://www.tikwm.com/api/?url=${url}`);
                     
                     if (json && json.code === 0) {
@@ -343,24 +338,62 @@
                             musicUrl: json.data.music.startsWith('http') ? json.data.music : base + json.data.music
                         };
                     } else {
-                        throw new Error("Video TikTok tidak valid, diprivat, atau URL salah.");
+                        throw new Error("Video TikTok tidak valid, diprivat, atau dihapus.");
                     }
                 } 
                 
+                // ==========================================
+                // INSTAGRAM MULTI-API FALLBACK LOGIC
+                // ==========================================
                 else if (url.includes('instagram.com')) {
-                    // API INSTAGRAM (Ryzendesu)
-                    const jsonIG = await safeFetch(`https://api.ryzendesu.vip/api/downloader/igdl?url=${url}`);
+                    
+                    let igVideoUrl = null;
+                    let igThumbnail = 'profile.jpg'; // default cover
 
-                    if (!jsonIG || !jsonIG.data || jsonIG.data.length === 0) {
-                        throw new Error("Gagal mengambil data Instagram. Pastikan akun IG tersebut tidak diprivat/terkunci.");
+                    // Coba API 1: SiputZX
+                    try {
+                        console.log("Mencoba API IG 1 (SiputZX)...");
+                        const res1 = await safeFetch(`https://api.siputzx.my.id/api/d/igdl?url=${url}`);
+                        if (res1 && res1.data && res1.data.length > 0) {
+                            igVideoUrl = res1.data[0].url;
+                        }
+                    } catch(e) {}
+
+                    // Coba API 2: Ryzendesu (Kalau API 1 gagal)
+                    if (!igVideoUrl) {
+                        try {
+                            console.log("Mencoba API IG 2 (Ryzendesu)...");
+                            const res2 = await safeFetch(`https://api.ryzendesu.vip/api/downloader/igdl?url=${url}`);
+                            if (res2 && res2.data && res2.data.length > 0) {
+                                igVideoUrl = res2.data[0].url;
+                                if(res2.data[0].thumbnail) igThumbnail = res2.data[0].thumbnail;
+                            }
+                        } catch(e) {}
+                    }
+
+                    // Coba API 3: Widipe via Proxy (Kalau API 1 & 2 gagal total)
+                    if (!igVideoUrl) {
+                        try {
+                            console.log("Mencoba API IG 3 (Widipe + Proxy)...");
+                            const proxyUrl = "https://corsproxy.io/?";
+                            const res3 = await safeFetch(proxyUrl + encodeURIComponent(`https://widipe.com/download/igdl?url=${url}`));
+                            if (res3 && res3.status && res3.result && res3.result.length > 0) {
+                                igVideoUrl = res3.result[0].url;
+                            }
+                        } catch(e) {}
+                    }
+
+                    // Pengecekan Terakhir
+                    if (!igVideoUrl) {
+                        throw new Error("Gagal mengambil Instagram. Semua server API saat ini sedang down/dibatasi oleh Instagram. Silakan coba beberapa jam lagi.");
                     }
 
                     finalData = {
                         platform: 'IG_DATA',
-                        cover: jsonIG.data[0].thumbnail || 'profile.jpg', // Jika ada thumbnail, pakai itu
+                        cover: igThumbnail, 
                         title: 'Instagram Media',
                         author: 'Instagram User',
-                        videoUrl: jsonIG.data[0].url, 
+                        videoUrl: igVideoUrl, 
                         musicUrl: null 
                     };
                 } 
@@ -373,8 +406,7 @@
                 renderResult(finalData);
 
             } catch (err) {
-                // Tampilkan pesan error yang ramah manusia (bukan token <)
-                errorText.textContent = err.message || "Server sedang sibuk atau URL salah.";
+                errorText.textContent = err.message;
                 errorCard.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
